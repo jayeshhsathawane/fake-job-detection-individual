@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800">
+
+    <nav class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-shield-halved text-blue-600 text-2xl"></i>
+                    <h1 class="text-xl font-bold text-slate-800">Job Shield Admin</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-slate-500 hidden sm:block">Welcome, Admin</span>
+                    <a href="{{ url_for('logout') }}" class="text-red-500 hover:text-red-700 font-medium text-sm transition flex items-center gap-2 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-6 space-y-2">
+                {% for category, message in messages %}
+                    {% if category == 'success' %}
+                        <div class="p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded shadow-sm flex items-center gap-3">
+                            <i class="fa-solid fa-circle-check"></i> {{ message }}
+                        </div>
+                    {% else %}
+                        <div class="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded shadow-sm flex items-center gap-3">
+                            <i class="fa-solid fa-triangle-exclamation"></i> {{ message }}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-slate-500">Total Scans</p>
+                    <p class="text-3xl font-bold text-slate-800">{{ total }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+                    <i class="fa-solid fa-database text-xl"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-slate-500">Fake Jobs Detected</p>
+                    <p class="text-3xl font-bold text-red-600">{{ fake }}</p>
+                </div>
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600">
+                    <i class="fa-solid fa-ban text-xl"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-slate-500">Real Jobs Verified</p>
+                    <p class="text-3xl font-bold text-green-600">{{ real }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                    <i class="fa-solid fa-check text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-2 space-y-8">
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-blue-500"></i> Prediction Trends
+                    </h3>
+                    <div class="relative h-72 w-full">
+                        <canvas id="lineChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-purple-500"></i> Fake vs Real Ratio
+                    </h3>
+                    <div class="relative h-64 w-full flex justify-center">
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="space-y-8">
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Quick Actions</h3>
+                    <div class="grid grid-cols-1 gap-3">
+                        <a href="{{ url_for('predict_form') }}" class="group flex items-center gap-4 p-3 rounded-lg border border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition cursor-pointer">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 transition">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </div>
+                            <span class="font-medium text-slate-700 group-hover:text-blue-700">Scan New Job</span>
+                        </a>
+
+                        <a href="{{ url_for('history') }}" class="group flex items-center gap-4 p-3 rounded-lg border border-slate-200 hover:border-green-500 hover:bg-green-50 transition cursor-pointer">
+                            <div class="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center group-hover:scale-110 transition">
+                                <i class="fa-solid fa-file-lines"></i>
+                            </div>
+                            <span class="font-medium text-slate-700 group-hover:text-green-700">View History</span>
+                        </a>
+
+                        <a href="{{ url_for('retrain_logs') }}" class="group flex items-center gap-4 p-3 rounded-lg border border-slate-200 hover:border-orange-500 hover:bg-orange-50 transition cursor-pointer">
+                            <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center group-hover:scale-110 transition">
+                                <i class="fa-solid fa-gear"></i>
+                            </div>
+                            <span class="font-medium text-slate-700 group-hover:text-orange-700">Training Logs</span>
+                        </a>
+
+                        <a href="{{ url_for('compare_models') }}" class="group flex items-center gap-4 p-3 rounded-lg border border-slate-200 hover:border-purple-500 hover:bg-purple-50 transition cursor-pointer">
+                            <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center group-hover:scale-110 transition">
+                                <i class="fa-solid fa-scale-balanced"></i>
+                            </div>
+                            <span class="font-medium text-slate-700 group-hover:text-purple-700">Compare Models</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="bg-slate-800 p-4">
+                        <h3 class="text-white font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-server"></i> Model Status
+                        </h3>
+                    </div>
+                    <div class="p-6">
+                        {% if last_log %}
+                            <ul class="space-y-4 text-sm">
+                                <li class="flex justify-between items-center border-b border-slate-100 pb-2">
+                                    <span class="text-slate-500">Last Retrained</span>
+                                    <span class="font-semibold text-slate-800">{{ last_log[1] }}</span>
+                                </li>
+                                <li class="flex justify-between items-center border-b border-slate-100 pb-2">
+                                    <span class="text-slate-500">Accuracy</span>
+                                    <span class="font-bold text-green-600 bg-green-50 px-2 py-1 rounded">{{ last_log[0] }}%</span>
+                                </li>
+                                <li class="flex justify-between items-center border-b border-slate-100 pb-2">
+                                    <span class="text-slate-500">Training Rows</span>
+                                    <span class="font-semibold text-slate-800">17,880</span>
+                                </li>
+                                <li class="flex justify-between items-center">
+                                    <span class="text-slate-500">Algorithm</span>
+                                    <span class="font-semibold text-slate-800">Logistic Reg.</span>
+                                </li>
+                            </ul>
+                        {% else %}
+                            <div class="text-center py-4 text-slate-500">
+                                <p>No model metadata found.</p>
+                            </div>
+                        {% endif %}
+
+                        <form action="{{ url_for('retrain') }}" method="POST" class="mt-6">
+                            <button type="submit" 
+                                class="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-3 rounded-lg shadow-md hover:shadow-lg transition duration-200 flex items-center justify-center gap-2"
+                                onclick="return confirm('⚠️ This will start the model retraining process. This may take a few minutes. Continue?')">
+                                <i class="fa-solid fa-rotate"></i> Retrain Model
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Data coming from Flask
+        const fakeCount = {{ fake | default(0) }}; 
+        const realCount = {{ real | default(0) }};
+        const dates = JSON.parse('{{ dates | tojson | safe }}'); 
+        const counts = JSON.parse('{{ counts | tojson | safe }}');
+
+        // PIE CHART CONFIG
+        const pieCtx = document.getElementById("pieChart").getContext("2d");
+        new Chart(pieCtx, {
+            type: "doughnut", // Changed to Doughnut for modern look
+            data: {
+                labels: ["Fake Jobs", "Real Jobs"],
+                datasets: [{
+                    data: [fakeCount, realCount],
+                    backgroundColor: ["#ef4444", "#22c55e"], // Tailwind Red-500 and Green-500
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+                },
+                cutout: '70%' // Thin doughnut
+            }
+        });
+
+        // LINE CHART CONFIG
+        const lineCtx = document.getElementById("lineChart").getContext("2d");
+        new Chart(lineCtx, {
+            type: "line",
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: "Predictions Per Day",
+                    data: counts,
+                    borderColor: "#3b82f6", // Tailwind Blue-500
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)', // Blue with opacity
+                    borderWidth: 2,
+                    pointBackgroundColor: "#ffffff",
+                    pointBorderColor: "#3b82f6",
+                    pointRadius: 4,
+                    fill: true,
+                    tension: 0.3, // Smooth curves
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        padding: 10,
+                        cornerRadius: 8,
+                        displayColors: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { borderDash: [2, 4], color: '#e2e8f0' },
+                        ticks: { padding: 10 }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { padding: 10 }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

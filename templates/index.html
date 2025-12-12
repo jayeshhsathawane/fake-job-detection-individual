@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake Job Detection</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Smooth fade in animation */
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+
+    <script>
+        function validateForm(event) {
+            const textarea = document.forms["jobForm"]["job_description"];
+            const text = textarea.value.trim();
+            const errorBox = document.getElementById('js-error-box');
+            const errorMessage = document.getElementById('js-error-message');
+
+            // Reset error state
+            errorBox.classList.add('hidden');
+            textarea.classList.remove('border-red-500', 'focus:ring-red-500');
+            textarea.classList.add('border-slate-300', 'focus:ring-blue-500');
+
+            // Validation Logic
+            let msg = "";
+            if (text === "") {
+                msg = "Please paste a job description before analyzing.";
+            } else if (text.split(/\s+/).length < 5) {
+                msg = "The description is too short. Please enter at least 5 words.";
+            }
+
+            if (msg) {
+                // Prevent form submission
+                event.preventDefault();
+                
+                // Show Error UI
+                errorMessage.textContent = msg;
+                errorBox.classList.remove('hidden');
+                textarea.classList.remove('border-slate-300', 'focus:ring-blue-500');
+                textarea.classList.add('border-red-500', 'focus:ring-red-500');
+                return false;
+            }
+            return true;
+        }
+    </script>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col items-center justify-center p-4 font-sans text-slate-800">
+
+    <div class="w-full max-w-2xl bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 fade-in">
+        
+        <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-white/10 rounded-full mb-4 text-white backdrop-blur-sm">
+                <i class="fa-solid fa-shield-cat text-3xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-white mb-2">Fake Job Detector</h1>
+            <p class="text-blue-100">Paste a job description below to check its authenticity using AI.</p>
+        </div>
+
+        <div class="p-8">
+
+            {% if error %}
+            <div class="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-r shadow-sm flex items-start gap-3">
+                <i class="fa-solid fa-circle-exclamation mt-1"></i>
+                <div>
+                    <p class="font-bold">System Error</p>
+                    <p class="text-sm">{{ error }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <div id="js-error-box" class="hidden mb-6 bg-amber-50 border-l-4 border-amber-500 text-amber-800 p-4 rounded-r shadow-sm flex items-center gap-3">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span id="js-error-message" class="font-medium text-sm"></span>
+            </div>
+
+            <form name="jobForm" action="{{ url_for('predict') }}" method="post" onsubmit="validateForm(event)" class="space-y-6">
+                
+                <div>
+                    <label for="job_description" class="block text-sm font-semibold text-slate-700 mb-2">
+                        Job Description
+                    </label>
+                    <textarea 
+                        name="job_description" 
+                        id="job_description"
+                        rows="8" 
+                        class="w-full p-4 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none text-slate-600 leading-relaxed shadow-sm"
+                        placeholder="e.g. We are looking for a Data Scientist... (Paste full text here)"
+                    ></textarea>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-200 transition duration-200 flex items-center justify-center gap-2 group">
+                    <span>Analyze Description</span>
+                    <i class="fa-solid fa-wand-magic-sparkles group-hover:rotate-12 transition-transform"></i>
+                </button>
+
+            </form>
+
+            <div class="flex justify-between items-center mt-6 pt-6 border-t border-slate-100">
+                <a href="{{ url_for('dashboard') }}" class="text-slate-500 hover:text-blue-600 font-medium text-sm flex items-center gap-2 transition">
+                    <i class="fa-solid fa-house"></i> Admin Dashboard
+                </a>
+                <a href="{{ url_for('history') }}" class="text-slate-500 hover:text-green-600 font-medium text-sm flex items-center gap-2 transition">
+                    <i class="fa-solid fa-clock-rotate-left"></i> View History
+                </a>
+            </div>
+        </div>
+
+        <div class="bg-slate-50 p-6 border-t border-slate-200">
+            <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <i class="fa-regular fa-lightbulb text-amber-500"></i> Safety Tips
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-slate-600">
+                <div class="flex items-start gap-2">
+                    <i class="fa-solid fa-check text-green-500 mt-1"></i>
+                    <span>Verify the company website & contact info.</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <i class="fa-solid fa-ban text-red-500 mt-1"></i>
+                    <span>Avoid offers asking for registration fees.</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <i class="fa-solid fa-at text-blue-500 mt-1"></i>
+                    <span>Be wary of emails from @gmail or @yahoo.</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <i class="fa-solid fa-magnifying-glass text-purple-500 mt-1"></i>
+                    <span>Check reviews on Glassdoor or LinkedIn.</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer class="mt-8 text-center text-slate-400 text-sm">
+        <p>Developed by <span class="font-semibold text-slate-500">Team 4</span> | Fake Job Detection Project</p>
+    </footer>
+
+</body>
+</html>

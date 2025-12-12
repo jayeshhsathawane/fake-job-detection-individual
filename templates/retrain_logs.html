@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Training Logs</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 min-h-screen p-4 md:p-10 font-sans text-slate-800">
+
+    <div class="max-w-4xl mx-auto">
+        
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                    <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
+                        <i class="fa-solid fa-gears"></i>
+                    </div>
+                    Model Retraining History
+                </h2>
+                <p class="text-slate-500 text-sm mt-1 ml-14">A system log of all model updates and performance metrics.</p>
+            </div>
+            
+            <a href="{{ url_for('dashboard') }}" class="inline-flex items-center justify-center gap-2 bg-white text-slate-600 border border-slate-300 hover:bg-slate-50 hover:text-blue-600 px-4 py-2 rounded-lg font-medium transition shadow-sm text-sm">
+                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            
+            {% if logs %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold tracking-wider">
+                            <th class="px-6 py-4">Date & Time</th>
+                            <th class="px-6 py-4">Model Accuracy</th>
+                            <th class="px-6 py-4">Training Source</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for time, accuracy, source in logs %}
+                        <tr class="hover:bg-slate-50 transition duration-150">
+                            
+                            <td class="px-6 py-4">
+                                <span class="text-sm font-mono text-slate-500 flex items-center gap-2">
+                                    <i class="fa-regular fa-calendar text-slate-400"></i> {{ time }}
+                                </span>
+                            </td>
+
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                                        <i class="fa-solid fa-bullseye text-xs"></i> {{ accuracy }}%
+                                    </span>
+                                </div>
+                            </td>
+
+                            <td class="px-6 py-4">
+                                <span class="text-sm font-medium text-slate-700 flex items-center gap-2">
+                                    <i class="fa-solid fa-database text-orange-400"></i> {{ source }}
+                                </span>
+                            </td>
+
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 text-xs text-slate-400">
+                Total Logs: <span class="font-bold text-slate-600">{{ logs|length }}</span>
+            </div>
+
+            {% else %}
+            <div class="flex flex-col items-center justify-center py-16 text-center">
+                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
+                    <i class="fa-solid fa-server text-3xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-700">No Logs Available</h3>
+                <p class="text-slate-500 max-w-sm mt-2 text-sm">The model has not generated any retraining logs yet.</p>
+                <form action="{{ url_for('retrain') }}" method="POST" class="mt-6">
+                     <button type="submit" onclick="return confirm('Start retraining?')" class="text-blue-600 hover:text-blue-800 font-semibold text-sm">
+                        Run First Retrain &rarr;
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+</body>
+</html>
